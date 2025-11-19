@@ -1,19 +1,20 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import * as path from 'path';
+import { defineConfig } from 'vite';
+import { resolve } from 'path';
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    react({
-      babel: {
-        plugins: [['babel-plugin-react-compiler']],
-      },
-    }),
-  ],
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, 'src'),
+  publicDir: false,
+  build: {
+    lib: {
+      entry: resolve(__dirname, 'package/src/index.js'),
+      name: 'ReactMarkdownCore',
+      formats: ['es', 'cjs', 'umd'],
+      fileName: (fmt) => `index.${fmt}.js`
     },
-  },
-})
+    outDir: 'dist',
+    rollupOptions: {
+      external: [] //  完全清空
+    },
+    sourcemap: true,
+    minify: 'esbuild'
+  }
+});
