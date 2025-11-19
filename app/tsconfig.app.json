@@ -17,9 +17,5 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": [
-    "src/**/*.js", 
-    "src/**/*.jsx" 
-  ],
- 
+ "include": ["src"]
 }
