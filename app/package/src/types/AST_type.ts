@@ -1,4 +1,3 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { parseToTokens } from '../util/parser_core';
 export interface BaseToken {
     //先弄简易版paragraph_open、inline（text、strong_open）、paragraph_close  
