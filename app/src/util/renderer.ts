@@ -1,0 +1,3 @@
+function Renderer() {
+    return true;
+}
