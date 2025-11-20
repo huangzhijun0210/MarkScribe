@@ -26,7 +26,7 @@ export type MarkScribeOptions = {
 
 }
 
-// 定义默认配置（之前的代码是给类型赋值，而非默认配置）
+// 定义默认配置
 const DEFAULT_OPTIONS: MarkScribeOptions = {
     html: false,
     xhtmlOut: false,
@@ -38,12 +38,12 @@ const DEFAULT_OPTIONS: MarkScribeOptions = {
 }
 
 
-export default function MarkScribe(options?: Partial<MarkScribeOptions>) {
+export default function MarkScribe(this: any, options?: Partial<MarkScribeOptions>) {
     // 合并用户配置和默认配置
-    (this as any).options = { ...DEFAULT_OPTIONS, ...options };
-    
+    this.options = { ...DEFAULT_OPTIONS, ...options };
+
     //暂时随便弄个renderer保证下面写的render不报错（renderer的作用是根据tokens生成HTML）
-    (this as any).renderer = {
+    this.renderer = {
         render: (tokens: any[], options: MarkScribeOptions, env: any) => {
             // 这里需要根据 tokens 生成 HTML
             return `<div class="markdown-content">${JSON.stringify(tokens)}</div>`;

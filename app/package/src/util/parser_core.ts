@@ -1,4 +1,4 @@
-import type { TokenList } from '@/types/AST_type'
+import type { TokenList } from '../types/AST_type'
 
 type State = { src: string; env?: Record<string, unknown>; tokens: TokenList };
 
@@ -6,7 +6,7 @@ type State = { src: string; env?: Record<string, unknown>; tokens: TokenList };
 //这里是构建AST的地方
 class Core {
     process(state: State) {
-        state.tokens = [ ];
+        state.tokens = [];
     }
 }
 
