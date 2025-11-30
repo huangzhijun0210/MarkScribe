@@ -1,8 +1,10 @@
 import { useRef,useState } from 'react';
 import Toolbar from '../components/Toolbar';
 import styles from '../scss/components.module.scss'
+import { MarkScribe } from '../../../package/src/MarkScribe';
 
 export default function Components({ dark }) {
+  const md = new MarkScribe();
   const [markdown, setMarkdown] = useState('# Hello MarkScribe!');
   const textareaRef = useRef(null);
 
@@ -29,7 +31,7 @@ export default function Components({ dark }) {
               color: dark ? '#eee' : '#222',
               borderColor: dark ? '#444' : '#ddd',
             }}
-          >{markdown}
+          >{  <div dangerouslySetInnerHTML={{ __html: md.render(markdown) }} />}
           </div>
         </div>
       </div>

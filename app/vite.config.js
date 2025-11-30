@@ -5,7 +5,7 @@ export default defineConfig({
   publicDir: false,
   build: {
     lib: {
-      entry: resolve(__dirname, 'package/src/util/MarkScribe.ts'),
+      entry: resolve(__dirname, 'package/src/MarkScribe.ts'),
       name: 'ReactMarkdownCore',
       formats: ['es', 'cjs', 'umd'],
       fileName: (fmt) => `index.${fmt}.js`
