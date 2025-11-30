@@ -1,0 +1,1 @@
+export default () => <h1>Markdown → AST 解释器</h1>;

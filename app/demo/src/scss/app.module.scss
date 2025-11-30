@@ -1,0 +1,38 @@
+.appStyles {
+     height: 100vh; 
+     width: 100vw; 
+     margin: 0;
+     padding: 0 ;
+     box-sizing: border-box; 
+     overflow: hidden;
+}
+.head{
+     position: fixed;
+     top: 0;
+     left: 0;
+     width: 100vw;
+     height: 64 ;
+     padding: 0 24px ;
+     border-bottom: 1px solid #ddd ;
+     display: flex ;
+     align-items: center ;
+     justify-content: end ;
+     z-index: 10 ;
+     min-height: 60px;
+     box-sizing: border-box;
+     nav{
+          margin-right: 30px;
+     }
+     
+}
+.navLink {
+    text-decoration: none;
+    font-weight: 400;
+    font-size: 14px;
+    color: #333;
+    padding:8px;
+    border-radius: 4px;
+    &:hover{
+          color: rgb(113, 174, 227);
+     }
+}
