@@ -1,3 +1,0 @@
-function Renderer() {
-    return true;
-}

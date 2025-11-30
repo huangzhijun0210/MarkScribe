@@ -1,5 +1,7 @@
 
-import { parseToTokens } from './parser_core'
+import lexer from './util/lexer/lexer';
+import parser from './util/parser/parser'
+import renderer from './util/renderer/renderer';
 
 export type MarkScribeOptions = {
     html?: false,        // 在源码中启用 HTML 标签
@@ -27,7 +29,7 @@ export type MarkScribeOptions = {
 }
 
 // 定义默认配置
-const DEFAULT_OPTIONS: MarkScribeOptions = {
+const OPTIONS: MarkScribeOptions = {
     html: false,
     xhtmlOut: false,
     breaks: false,
@@ -38,27 +40,38 @@ const DEFAULT_OPTIONS: MarkScribeOptions = {
 }
 
 
-export default function MarkScribe(this: any, options?: Partial<MarkScribeOptions>) {
-    // 合并用户配置和默认配置
-    this.options = { ...DEFAULT_OPTIONS, ...options };
-
-    //暂时随便弄个renderer保证下面写的render不报错（renderer的作用是根据tokens生成HTML）
-    this.renderer = {
-        render: (tokens: any[], options: MarkScribeOptions, env: any) => {
-            // 这里需要根据 tokens 生成 HTML
-            return `<div class="markdown-content">${JSON.stringify(tokens)}</div>`;
-        }
-    };
-}
-
-//这里先写好逻辑，实现还没开始
-MarkScribe.prototype.render = function (text: string, env: any = {}) {
-    return this.renderer.render(this.parse(text, env), this.options, env)
-}
-
-MarkScribe.prototype.parse = function (text: string, env: any = {}) {
+//词法分析
+MarkScribe.prototype.lexer = function (text: string, env: any = {}) {
     if (typeof text !== 'string') {
         throw new Error('Input data should be a String')
     }
-    return parseToTokens(text, env)
+    return lexer(text)
 }
+
+//语法分析
+MarkScribe.prototype.parser = function (tokens: string[]) {
+    return parser(tokens);
+}
+
+//html渲染
+MarkScribe.prototype.renderer = function(ast:string[]){
+    return renderer(ast);
+}
+
+//解析器直接方法
+MarkScribe.prototype.render = function (text: string, env: any = {}) {
+    if (typeof text !== 'string') {
+        throw new Error('Input data should be a String')
+    }
+    // 三阶段流程：词法分析 → 语法分析 → HTML渲染
+    const tokens = lexer(text);
+    const ast = parser(tokens);
+    const html = renderer(ast);
+    return html;
+}
+
+    // 合并用户配置和默认配置
+export function MarkScribe(this: any, options?: Partial<MarkScribeOptions>) {
+    this.options = { ...OPTIONS, ...options };
+}
+
