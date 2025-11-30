@@ -1,29 +1,97 @@
-import { unified } from 'unified';
-import remarkParse from 'remark-parse';
-import remarkRehype from 'remark-rehype';
-import rehypeStringify from 'rehype-stringify';
-import MarkScribe from './util/MarkScribe';
-import { TokenList } from './types/AST_type'
-export function mdToHtml(md, options = {}) {
-  let processor = unified()
-    .use(remarkParse)
-    .use(remarkRehype)
-    .use(rehypeStringify);
+import { MarkScribe } from './MarkScribe.ts';
+const { test, expect } = import.meta.vitest;
 
-  // 阶段 4 可注入更多插件
-  if (options.plugins) {
-    options.plugins.forEach(p => processor = processor.use(p));
-  }
 
-  return processor.processSync(md).toString();
-}
 
 // 跑通测试
 if (import.meta.vitest) {
-  const { test, expect } = import.meta.vitest;
-  test("AST", () => {
+  test("lexer", () => {
+    expect(new MarkScribe().lexer(`这是一段**加粗**文本`)).toStrictEqual([
+      {
+        "type": "paragraph_open",
+      },
+      {
+        "content": "这是一段",
+        "type": "text",
+      },
+      {
+        "markup": "**",
+        "type": "strong_markup",
+      },
+      {
+        "content": "加粗",
+        "type": "text",
+      },
+      {
+        "markup": "**",
+        "type": "strong_markup",
+      },
+      {
+        "content": "文本",
+        "type": "text",
+      },
+      {
+        "type": "paragraph_close",
+      },
+    ]);
+  })
+
+
+  test("parser", () => {
     let md = new MarkScribe();
-    const result = md.parse(`# GGG`);
-     expect(md.parse(`# GGG`)).toStrictEqual([]);
+    let res = md.lexer(`这是一段**加粗**文本`);
+    expect(new MarkScribe().parser(res)).toStrictEqual([
+      {
+        "type": "paragraph_open",
+        "tag": "p",
+        "nesting": 1,
+        "children": [
+          {
+            "type": "inline",
+            "children": [
+              {
+                "type": "text",
+                "content": "这是一段",
+                "nesting": 0
+              },
+              {
+                "type": "strong_open",
+                "tag": "strong",
+                "markup": "**",
+                "nesting": 1
+              },
+              {
+                "type": "text",
+                "content": "加粗",
+                "nesting": 0
+              },
+              {
+                "type": "strong_close",
+                "tag": "strong",
+                "markup": "**",
+                "nesting": -1
+              },
+              {
+                "type": "text",
+                "content": "文本",
+                "nesting": 0
+              }
+            ],
+            "content": ""
+          }
+        ]
+      },
+      {
+        "type": "paragraph_close",
+        "tag": "p",
+        "nesting": -1
+      }
+    ])
+  })
+
+
+  test("render", () => {
+    expect(new MarkScribe().render('这是一段**加粗**文本')).toStrictEqual('<p>这是一段<strong>加粗</strong>文本</p>')
   })
 }
+
