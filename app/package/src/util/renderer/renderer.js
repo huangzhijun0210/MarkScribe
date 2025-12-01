@@ -1,6 +1,6 @@
 import browserUrl from '../public/browserUrl';
 import inlineNodeParse from './inline_node_parse';
-
+import splitBlockquoteBr from './split_blockquote_br'
 
 /**
  * html渲染器：生成html
@@ -38,7 +38,7 @@ function renderer(ast) {
           const inlineChild = node.children.find(c => c.type === 'inline');
           if (inlineChild) {
             //按换行br拆分，br后的交给stack，在关闭时进行操作（还有问题：应该优化为open一次处理好+多个br处理时的问题）
-            const split = splitInlineAtFirstBr(inlineChild.children);
+            const split = splitBlockquoteBr(inlineChild.children);
             if (split.prefix) html += `<p>${split.prefix}</p>\n`;
             reNode = split.reNode;
           }

@@ -1,3 +1,6 @@
+import renderInlineChildren from './inline_node_parse'
+
+
 //根据换行拆分
 function splitBlockquoteBr(children) {
   const index = children.findIndex(c => c.type === 'br');

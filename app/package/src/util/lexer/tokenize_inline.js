@@ -1,7 +1,7 @@
 import browserUrl from '../public/browserUrl'
 
 //处理行内语法
-function tokenizeInline(text) {
+function tokenizeInline(text, refMap, usedFootnotes) {
   if (!text || typeof text !== 'string' || text.trim() === '') return [];
   const tokens = [];
   let position = 0; // 当前扫描位置(文本每个字符)

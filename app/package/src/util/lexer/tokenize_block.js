@@ -1,10 +1,11 @@
 import tokenizeInline from "./tokenize_inline";
+import escapeCell from '../public/escape'
 
 //块级语法解析分为三部分：
 //高优先级块匹配：先处理「有明确边界标识」的块（代码块、水平线、表格）
 //多行文本块处理
 //单行文本块处理
-function tokenizeBlock(block) {
+function tokenizeBlock(block, refMap, usedFootnotes) {
   //匹配代码块
   const codeRegex = /^```(\w+)?\n([\s\S]*?)\n```$/;
   const codeMatch = block.match(codeRegex);
@@ -80,7 +81,7 @@ function tokenizeBlock(block) {
       tokens.push({ type: 'paragraph_open' });
       for (let i = 0; i < paragraphBuffer.length; i++) {
         const { text, brAfter } = paragraphBuffer[i];
-        tokens.push(...tokenizeInline(text));
+        tokens.push(...tokenizeInline(text, refMap, usedFootnotes));
         if (i < paragraphBuffer.length - 1 && brAfter) tokens.push({ type: 'br' });
       }
       tokens.push({ type: 'paragraph_close' });
@@ -209,7 +210,7 @@ function tokenizeBlock(block) {
       if (/^\s*=+\s*$/.test(line) && paragraphBuffer.length === 1) {
         const text = paragraphBuffer[0].text.trim();
         paragraphBuffer = [];
-        tokens.push({ type: 'heading_1_open' }, ...tokenizeInline(text), { type: 'heading_1_close' });
+        tokens.push({ type: 'heading_1_open' }, ...tokenizeInline(text, refMap, usedFootnotes), { type: 'heading_1_close' });
         continue;
       }
 
@@ -219,7 +220,7 @@ function tokenizeBlock(block) {
       if (/^\s*-+\s*$/.test(line) && paragraphBuffer.length === 1) {
         const text = paragraphBuffer[0].text.trim();
         paragraphBuffer = [];
-        tokens.push({ type: 'heading_2_open' }, ...tokenizeInline(text), { type: 'heading_2_close' });
+        tokens.push({ type: 'heading_2_open' }, ...tokenizeInline(text, refMap, usedFootnotes), { type: 'heading_2_close' });
         continue;
       }
 
@@ -248,7 +249,7 @@ function tokenizeBlock(block) {
           for (let k = curQuoteLevel; k > level; k--) tokens.push({ type: 'blockquote_close' });
           curQuoteLevel = level;
         }
-        tokens.push(...tokenizeInline(content));
+        tokens.push(...tokenizeInline(content, refMap, usedFootnotes));
         tokens.push({ type: 'br' });   // 每行引用后添加换行标记
         continue;
       } else {
@@ -262,7 +263,7 @@ function tokenizeBlock(block) {
         closeList();
         const level = m[1].length;  //#数
         const text = m[2] || '';
-        tokens.push({ type: `heading_${level}_open` }, ...tokenizeInline(text), { type: `heading_${level}_close` });
+        tokens.push({ type: `heading_${level}_open` }, ...tokenizeInline(text, refMap, usedFootnotes), { type: `heading_${level}_close` });
         continue;
       }
 
@@ -314,10 +315,10 @@ function tokenizeBlock(block) {
           // 是任务列表项：生成复选框 Token
           const checked = /x/i.test(task[1]);
           tokens.push({ type: 'task_checkbox', checked });
-          tokens.push(...tokenizeInline(task[2] || ''));
+          tokens.push(...tokenizeInline(task[2] || '', refMap, usedFootnotes));
         } else {
           // 普通列表项：直接解析内容为行内 Token
-          tokens.push(...tokenizeInline(itemText));
+          tokens.push(...tokenizeInline(itemText, refMap, usedFootnotes));
         }
         if (brAfterItem) tokens.push({ type: 'br' }); // 若有双空格结尾，生成强制换行 Token
         listItemStack.push(indent); // 记录当前列表项的缩进量（用于后续层级管理）
@@ -333,7 +334,7 @@ function tokenizeBlock(block) {
         if (lastTok && lastTok.type !== 'br' && lastTok.type !== 'list_item_open') {
           tokens.push({ type: 'br' });
         }
-        tokens.push(...tokenizeInline(clean));
+        tokens.push(...tokenizeInline(clean, refMap, usedFootnotes));
         if (brAfter) tokens.push({ type: 'br' });
         continue;
       }
@@ -357,7 +358,7 @@ function tokenizeBlock(block) {
       // 拼接未闭合代码围栏的原始文本（起始行 + 收集的内容）
       const rawText = `${fenceOpenRaw}\n${fenceBuf.join('\n')}`.replace(/\n+$/, '');
       tokens.push({ type: 'paragraph_open' });
-      tokens.push(...tokenizeInline(rawText));
+      tokens.push(...tokenizeInline(rawText, refMap, usedFootnotes));
       tokens.push({ type: 'paragraph_close' });
       // 重置代码块相关状态
       inFence = false;
@@ -382,7 +383,7 @@ function tokenizeBlock(block) {
     const text = headingMatch[2] || '';
     return [
       { type: `heading_${level}_open` },
-      ...tokenizeInline(text),
+      ...tokenizeInline(text, refMap, usedFootnotes),
       { type: `heading_${level}_close` }
     ];
   }
@@ -398,7 +399,7 @@ function tokenizeBlock(block) {
     const text = items[0].replace(/^(?:-|\+|\*|\d+\.)\s+/, '').trim();
     tokens.push(
       { type: 'list_item_open' },
-      ...tokenizeInline(text),
+      ...tokenizeInline(text, refMap, usedFootnotes),
       { type: 'list_item_close' }
     );
 
@@ -412,14 +413,14 @@ function tokenizeBlock(block) {
     const content = block.replace(/^\s*(?:>\s*)+/, '').trim();
     return [
       { type: 'blockquote_open' },
-      ...tokenizeInline(content),
+      ...tokenizeInline(content, refMap, usedFootnotes),
       { type: 'blockquote_close' }
     ];
   }
 
   return [
     { type: 'paragraph_open' },
-    ...tokenizeInline(block),
+    ...tokenizeInline(block, refMap, usedFootnotes),
     { type: 'paragraph_close' }
   ];
 }
