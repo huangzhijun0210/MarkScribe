@@ -16,3 +16,5 @@ function isInlineContainer(blockType) {
   ];
   return inlineTypes.includes(blockType);
 }
+
+export default isInlineContainer;

@@ -1,4 +1,4 @@
-import browserUrl from '../public/browserUrl';
+import escape from '../public/escape';
 import inlineNodeParse from './inline_node_parse';
 import splitBlockquoteBr from './split_blockquote_br'
 
@@ -87,7 +87,7 @@ function renderer(ast) {
       case 'code_block_open':
         html += `<${node.tag}><code>`;  //<pre><code>
         // 渲染代码内容（保留换行和空格）
-        if (node.content) html += browserUrl(node.content);
+        if (node.content) html += escape(node.content);
         tagStack.push(node.tag);
         tagStack.push('code');
         break;
@@ -99,7 +99,7 @@ function renderer(ast) {
         html += `</${closeCode}></${closePre}>\n`;
         break;
 
-      //1-6ji标签
+      //1-6级标签
       case 'heading_1_open':
       case 'heading_2_open':
       case 'heading_3_open':
@@ -138,9 +138,8 @@ function renderer(ast) {
 
       //关联脚注引用
       case 'footnote_def_open':
-        html += `<p id="footnote-${browserUrl(String(node.id))}">`;
+        html += `<p id="footnote-${node.slug || escape(String(node.id))}">`;
         tagStack.push('p');
-        html += `${browserUrl(String(node.id))}. `;
         if (node.children) {
           const inlineChild = node.children.find(c => c.type === 'inline');
           if (inlineChild) html += inlineNodeParse(inlineChild.children);
@@ -160,15 +159,12 @@ function renderer(ast) {
 
 
       //下面是行内节点
-
-
-
       case 'inline':
         html += inlineNodeParse(node.children);
         break;
 
       case 'text':
-        html += browserUrl(node.content).replace(/\n/g, '<br>').replace(/\s{2,}/g, ' ');
+        html += escape(node.content).replace(/\n/g, '<br>').replace(/\s{2,}/g, ' ');
         break;
 
       case 'br':
@@ -176,23 +172,23 @@ function renderer(ast) {
         break;
 
       case 'code_inline':
-        html += `<code>${browserUrl(node.content)}</code>`;
+        html += `<code>${escape(node.content)}</code>`;
         break;
 
       case 'del_inline':
-        html += `<del>${browserUrl(node.content)}</del>`;
+        html += `<del>${escape(node.content)}</del>`;
         break;
 
       case 'image':
-        const imgTitle = node.title ? `title="${browserUrl(node.title)}"` : '';
-        html += `<img src="${browserUrl(node.src)}" alt="${browserUrl(node.alt)}" ${imgTitle}>`;
+        const imgTitle = node.title ? `title="${escape(node.title)}"` : '';
+        html += `<img src="${escape(node.src)}" alt="${escape(node.alt)}" ${imgTitle}>`;
         break;
 
       //链接
       case 'link_open':
-        const linkTitle = node.title ? `title="${browserUrl(node.title)}"` : '';
+        const linkTitle = node.title ? `title="${escape(node.title)}"` : '';
         const target = /^https?:/i.test(node.href) ? ' target="_blank"' : '';
-        html += `<a href="${browserUrl(node.href)}"${target} ${linkTitle}>`;
+        html += `<a href="${escape(node.href)}"${target} ${linkTitle}>`;
         tagStack.push(node.tag);
         break;
 
@@ -221,7 +217,7 @@ function renderer(ast) {
 
       //脚注引用
       case 'footnote_ref':
-        html += `<sup><a href="#footnote-${browserUrl(String(node.id))}">${browserUrl(String(node.id))}</a></sup>`;
+        html += `<sup><a href="#footnote-${node.slug || escape(String(node.id))}">${escape(String(node.id))}</a></sup>`;
         break;
 
       case 'strong_open':

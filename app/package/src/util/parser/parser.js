@@ -1,6 +1,6 @@
 import browserUrl from '../public/browserUrl';
 import labelType from '../public/labelType';
-import inlineType from '../public/labelType'
+import inlineType from '../public/inlineType'
 
 /**
  * 语法分析器：修复Token解析逻辑，生成正确AST
@@ -302,7 +302,7 @@ function parser(tokens) {
       //脚注
       case 'footnote_ref': {
         if (currentInline) {
-          currentInline.children.push({ type: 'footnote_ref', nesting: 0 });
+          currentInline.children.push({ type: 'footnote_ref', id: token.id, slug: token.slug, nesting: 0 });
         }
         break;
       }

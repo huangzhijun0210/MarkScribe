@@ -35,7 +35,7 @@ function tokenizeInline(text, refMap, usedFootnotes) {
       }
     }
 
-    // 遍历所有正则规则，找到当前位置最优先需要匹配的语法（最左+最长）
+    //1.遍历所有正则规则，2.找到当前位置最优先需要匹配的语法（最左+最长）
     let best = null; // 存储最匹配的结果
     for (const pattern of inlinePatterns) {
       //重置正则起始位置(全局匹配会从上次的lastIndex开始，这里是重置)

@@ -1,4 +1,4 @@
-import browserUrl from '../public/browserUrl'
+import escape from '../public/escape'
 
 /**
  * 辅助函数：渲染行内子节点
@@ -10,11 +10,11 @@ function inlineNodeParse(children) {
   children.forEach(child => {
     switch (child.type) {
       case 'text':
-        html += browserUrl(child.content).replace(/\n/g, '<br>').replace(/\s{2,}/g, ' ');
+        html += escape(child.content).replace(/\n/g, '<br>').replace(/\s{2,}/g, ' ');
         break;
 
       case 'del_inline':
-        html += `<del>${browserUrl(child.content)}</del>`;
+        html += `<del>${escape(child.content)}</del>`;
         break;
 
       case 'br':
@@ -22,18 +22,18 @@ function inlineNodeParse(children) {
         break;
 
       case 'code_inline':
-        html += `<code>${browserUrl(child.content)}</code>`;
+        html += `<code>${escape(child.content)}</code>`;
         break;
 
       case 'image':
-        const imgTitle = child.title ? `title="${browserUrl(child.title)}"` : '';
-        html += `<img src="${browserUrl(child.src)}" alt="${browserUrl(child.alt)}" ${imgTitle}>`;
+        const imgTitle = child.title ? `title="${escape(child.title)}"` : '';
+        html += `<img src="${escape(child.src)}" alt="${escape(child.alt)}" ${imgTitle}>`;
         break;
 
       case 'link_open':
-        const linkTitle = child.title ? `title="${browserUrl(child.title)}"` : '';
+        const linkTitle = child.title ? `title="${escape(child.title)}"` : '';
         const target = /^https?:/i.test(child.href) ? ' target="_blank"' : '';
-        html += `<a href="${browserUrl(child.href)}"${target} ${linkTitle}>`;
+        html += `<a href="${escape(child.href)}"${target} ${linkTitle}>`;
         tagStack.push('a');
         break;
 
@@ -50,7 +50,7 @@ function inlineNodeParse(children) {
         break;
 
       case 'footnote_ref':
-        html += `<sup><a href="#footnote-${browserUrl(String(child.id))}">${browserUrl(String(child.id))}</a></sup>`;
+        html += `<sup><a href="#footnote-${escape(String(child.id))}">${escape(String(child.id))}</a></sup>`;
         break;
 
       case 'strong_open':

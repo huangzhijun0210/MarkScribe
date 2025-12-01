@@ -338,6 +338,7 @@ function tokenizeBlock(block, refMap, usedFootnotes) {
         if (brAfter) tokens.push({ type: 'br' });
         continue;
       }
+      
       //处理普通文本行
       if (!paragraphBuffer.length) {   // 段落缓冲区为空 → 是新段落的第一行
         paragraphBuffer.push({ text: clean, brAfter }); // 存入缓冲区
