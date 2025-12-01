@@ -1,3 +1,5 @@
+import browserUrl from '../public/browserUrl'
+
 //处理行内语法
 function tokenizeInline(text) {
   if (!text || typeof text !== 'string' || text.trim() === '') return [];
@@ -114,7 +116,7 @@ function tokenizeInline(text) {
         const key = (groups[1] || alt).toLowerCase();
         //去引用表里查
         const ref = refMap[key];
-        if (ref) tokens.push({ type: 'image', alt, src: sanitizeUrl(ref.href), title: ref.title });
+        if (ref) tokens.push({ type: 'image', alt, src: browserUrl(ref.href), title: ref.title });
         else tokens.push({ type: 'text', content: match[0] });
         break;
       }
@@ -122,7 +124,7 @@ function tokenizeInline(text) {
         const textLabel = groups[0] || '';
         const key = (groups[1] || textLabel).toLowerCase();
         const ref = refMap[key];
-        if (ref) tokens.push({ type: 'link', text: textLabel, href: sanitizeUrl(ref.href), title: ref.title });
+        if (ref) tokens.push({ type: 'link', text: textLabel, href: browserUrl(ref.href), title: ref.title });
         else tokens.push({ type: 'text', content: match[0] });
         break;
       }
@@ -130,7 +132,7 @@ function tokenizeInline(text) {
         const label = groups[0] || '';
         const key = label.toLowerCase();
         const ref = refMap[key];
-        if (ref) tokens.push({ type: 'link', text: label, href: sanitizeUrl(ref.href), title: ref.title });
+        if (ref) tokens.push({ type: 'link', text: label, href: browserUrl(ref.href), title: ref.title });
         else tokens.push({ type: 'text', content: match[0] });
         break;
       }
@@ -138,10 +140,10 @@ function tokenizeInline(text) {
         tokens.push({ type: 'del_markup', markup: '~~' });
         break;
       case 'image':// 行内图片（![alt](src "title")）
-        tokens.push({ type: 'image', alt: groups[0] || '', src: sanitizeUrl((groups[1] || '').trim()), title: groups[2] || '' });
+        tokens.push({ type: 'image', alt: groups[0] || '', src: browserUrl((groups[1] || '').trim()), title: groups[2] || '' });
         break;
       case 'link':  // 行内链接（[text](href "title")）
-        tokens.push({ type: 'link', text: groups[0] || '', href: sanitizeUrl((groups[1] || '').trim()), title: groups[2] || '' });
+        tokens.push({ type: 'link', text: groups[0] || '', href: browserUrl((groups[1] || '').trim()), title: groups[2] || '' });
         break;
       case 'footnote_ref':   // 脚注引用（[^id]）
         usedFootnotes.add(groups[0]);
