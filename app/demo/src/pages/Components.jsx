@@ -1,4 +1,4 @@
-import { useRef,useState } from 'react';
+import { useRef, useState } from 'react';
 import Toolbar from '../components/Toolbar';
 import styles from '../scss/components.module.scss'
 import { MarkScribe } from '../../../package/src/MarkScribe';
@@ -11,7 +11,7 @@ export default function Components({ dark }) {
   const compiledHtml = `<h1>${markdown.replace(/^#\s*/, '')}</h1>`;
 
   return (
-    <div className={styles.compLayout}  style={{ background: dark ? '#222' : '#fff', color: dark ? '#eee' : '#222' }}>
+    <div className={styles.compLayout} style={{ background: dark ? '#222' : '#fff', color: dark ? '#eee' : '#222' }}>
       <div className={styles.com}>
         <div className={styles.compEditor}>
           <div className={styles.Toolbar}><Toolbar textRef={textareaRef} /></div>
@@ -31,11 +31,12 @@ export default function Components({ dark }) {
               color: dark ? '#eee' : '#222',
               borderColor: dark ? '#444' : '#ddd',
             }}
-          >{  <div dangerouslySetInnerHTML={{ __html: md.render(markdown) }} />}
+          >
+            {<div dangerouslySetInnerHTML={{ __html: md.render(markdown) }} className={styles.renderHtml} />}
           </div>
         </div>
       </div>
-      
+
 
     </div>
   );
