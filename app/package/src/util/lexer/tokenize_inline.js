@@ -1,7 +1,7 @@
 import browserUrl from '../public/browserUrl'
 
 //处理行内语法
-function tokenizeInline(text, refMap, usedFootnotes) {
+function tokenizeInline(text, refMap, usedFootnotes, options = {}) {
   if (!text || typeof text !== 'string' || text.trim() === '') return [];
   const tokens = [];
   let position = 0; // 当前扫描位置(文本每个字符)
@@ -150,7 +150,12 @@ function tokenizeInline(text, refMap, usedFootnotes) {
         tokens.push({ type: 'footnote_ref', id: groups[0] });
         break;
       case 'html_tag':
-        tokens.push({ type: 'html_inline', content: match[0] });
+        if (options && options.html === false) {
+          // 当禁用 HTML 时，将 html 标签当作普通文本（后续 renderer 会做转义）
+          tokens.push({ type: 'text', content: match[0] });
+        } else {
+          tokens.push({ type: 'html_inline', content: match[0] });
+        }
         break;
       case 'strong_markup': // 加粗标记（**或__）
         tokens.push({ type: 'strong_markup', markup: groups[0] || '**' });

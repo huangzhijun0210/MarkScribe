@@ -4,15 +4,24 @@ import parser from './util/parser/parser'
 import renderer from './util/renderer/renderer';
 
 export type MarkScribeOptions = {
-    html?: false,        // 在源码中启用 HTML 标签
-    xhtmlOut?: false,        // 使用 '/' 来闭合单标签 （比如 <br />）。
+    /* 
+       html: 是否允许源码中直接写 HTML 标签（如 <div>），如果为 false，则需要在渲染阶段过滤掉 HTML 标签。
+       xhtmlOut: 是否用 / 闭合单标签（如 <br />），否则为 <br>。
+       breaks: 是否将段落中的 \n 转换为 <br> 标签。
+       langPrefix: 代码块语言的 CSS 类前缀（如 language-js）。
+       linkify: 是否自动将文本中的 URL 转为 <a> 链接。
+       typographer: 是否启用智能引号和符号美化。
+       quotes: 智能引号替换对（如中文引号“”‘’）。 
+    */
+    html?: true,        // 在源码中启用 HTML 标签
+    xhtmlOut?: true,        // 使用 '/' 来闭合单标签 （比如 <br />）。
     // 这个选项只对完全的 CommonMark 模式兼容。
     breaks?: boolean,        // 转换段落里的 '\n' 到 <br>。
     langPrefix?: 'language-',  // 给围栏代码块的 CSS 语言前缀。对于额外的高亮代码非常有用。
-    linkify?: false,        // 将类似 URL 的文本自动转换为链接。
+    linkify?: true,        // 将类似 URL 的文本自动转换为链接。
 
     // 启用一些语言中立的替换 + 引号美化
-    typographer?: false,
+    typographer?: true,
 
     // 双 + 单引号替换对，当 typographer 启用时。
     // 或者智能引号等，可以是 String 或 Array。
@@ -30,12 +39,12 @@ export type MarkScribeOptions = {
 
 // 定义默认配置
 const OPTIONS: MarkScribeOptions = {
-    html: false,
-    xhtmlOut: false,
+    html: true,
+    xhtmlOut: true,
     breaks: true,
     langPrefix: 'language-',
-    linkify: false,
-    typographer: false,
+    linkify: true,
+    typographer: true,
     quotes: '“”‘’',
 }
 
@@ -45,7 +54,9 @@ MarkScribe.prototype.lexer = function (text: string, env: any = {}) {
     if (typeof text !== 'string') {
         throw new Error('Input data should be a String')
     }
-    return lexer(text)
+    // 传递实例配置给底层 lexer
+    const tokens = lexer(text, this.options || {});
+    return tokens;
 }
 
 //语法分析
@@ -65,9 +76,9 @@ MarkScribe.prototype.render = function (text: string, env: any = {}) {
         throw new Error('Input data should be a String')
     }
     // 三阶段流程：词法分析 → 语法分析 → HTML渲染
-    const tokens = lexer(text);
+    const tokens = this.lexer(text, env);
     const ast = parser(tokens);
-    const html = renderer(ast);
+    let html = renderer(ast);
     return html;
 }
 

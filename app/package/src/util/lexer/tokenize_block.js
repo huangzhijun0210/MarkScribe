@@ -5,7 +5,8 @@ import escapeCell from '../public/escape'
 //高优先级块匹配：先处理「有明确边界标识」的块（代码块、水平线、表格）
 //多行文本块处理
 //单行文本块处理
-function tokenizeBlock(block, refMap, usedFootnotes) {
+
+function tokenizeBlock(block, refMap, usedFootnotes, options = {}) {
   //匹配代码块
   const codeRegex = /^```(\w+)?\n([\s\S]*?)\n```$/;
   const codeMatch = block.match(codeRegex);
@@ -47,6 +48,14 @@ function tokenizeBlock(block, refMap, usedFootnotes) {
         // 检查剩余行：是否只有空白行(没东西就是[],every也返回true)
         const hasOnlyTable = lines.slice(j).every(l => !l.trim());
         if (hasOnlyTable) {
+          if (options && options.html === false) {
+            // 当禁用 HTML 时，作为普通文本段落输出（渲染时会被 escape）
+            return [
+              { type: 'paragraph_open' },
+              { type: 'text', content: html },
+              { type: 'paragraph_close' }
+            ];
+          }
           //组合+清理首尾多余字符
           const rows = [head, ...lines.slice(2, j)].map(l => l.replace(/^\s*\|/, '').replace(/\|\s*$/, ''));
           const cells = r => r.split(/\s*\|\s*/).map(c => escapeCell(c));
@@ -81,7 +90,7 @@ function tokenizeBlock(block, refMap, usedFootnotes) {
       tokens.push({ type: 'paragraph_open' });
       for (let i = 0; i < paragraphBuffer.length; i++) {
         const { text, brAfter } = paragraphBuffer[i];
-        tokens.push(...tokenizeInline(text, refMap, usedFootnotes));
+        tokens.push(...tokenizeInline(text, refMap, usedFootnotes, options));
         if (i < paragraphBuffer.length - 1 && brAfter) tokens.push({ type: 'br' });
       }
       tokens.push({ type: 'paragraph_close' });
@@ -210,7 +219,7 @@ function tokenizeBlock(block, refMap, usedFootnotes) {
       if (/^\s*=+\s*$/.test(line) && paragraphBuffer.length === 1) {
         const text = paragraphBuffer[0].text.trim();
         paragraphBuffer = [];
-        tokens.push({ type: 'heading_1_open' }, ...tokenizeInline(text, refMap, usedFootnotes), { type: 'heading_1_close' });
+        tokens.push({ type: 'heading_1_open' }, ...tokenizeInline(text, refMap, usedFootnotes, options), { type: 'heading_1_close' });
         continue;
       }
 
@@ -220,7 +229,7 @@ function tokenizeBlock(block, refMap, usedFootnotes) {
       if (/^\s*-+\s*$/.test(line) && paragraphBuffer.length === 1) {
         const text = paragraphBuffer[0].text.trim();
         paragraphBuffer = [];
-        tokens.push({ type: 'heading_2_open' }, ...tokenizeInline(text, refMap, usedFootnotes), { type: 'heading_2_close' });
+        tokens.push({ type: 'heading_2_open' }, ...tokenizeInline(text, refMap, usedFootnotes, options), { type: 'heading_2_close' });
         continue;
       }
 
@@ -249,7 +258,10 @@ function tokenizeBlock(block, refMap, usedFootnotes) {
           for (let k = curQuoteLevel; k > level; k--) tokens.push({ type: 'blockquote_close' });
           curQuoteLevel = level;
         }
-        tokens.push(...tokenizeInline(content, refMap, usedFootnotes));
+        tokens.push(...tokenizeInline(content, refMap, usedFootnotes, options));
+          tokens.push({ type: 'heading_1_open' }, ...tokenizeInline(text, refMap, usedFootnotes, options), { type: 'heading_1_close' });
+          tokens.push({ type: 'heading_2_open' }, ...tokenizeInline(text, refMap, usedFootnotes, options), { type: 'heading_2_close' });
+          tokens.push(...tokenizeInline(content, refMap, usedFootnotes, options));
         tokens.push({ type: 'br' });   // 每行引用后添加换行标记
         continue;
       } else {
@@ -263,7 +275,7 @@ function tokenizeBlock(block, refMap, usedFootnotes) {
         closeList();
         const level = m[1].length;  //#数
         const text = m[2] || '';
-        tokens.push({ type: `heading_${level}_open` }, ...tokenizeInline(text, refMap, usedFootnotes), { type: `heading_${level}_close` });
+        tokens.push({ type: `heading_${level}_open` }, ...tokenizeInline(text, refMap, usedFootnotes, options), { type: `heading_${level}_close` });
         continue;
       }
 
@@ -287,6 +299,13 @@ function tokenizeBlock(block, refMap, usedFootnotes) {
           const tbody = rows.map(r => `<tr>${cells(r).map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
           const html = `<table>\n  <thead>\n    <tr>${thead}</tr>\n  </thead>\n  <tbody>\n${tbody}\n  </tbody>\n</table>`;
           tokens.push({ type: 'html_inline', content: html });
+          if (options && options.html === false) {
+            tokens.push({ type: 'paragraph_open' });
+            tokens.push({ type: 'text', content: html });
+            tokens.push({ type: 'paragraph_close' });
+          } else {
+            tokens.push({ type: 'html_inline', content: html });
+          }
           i = j - 1;  //跳过已处理的行
           continue;
         }
@@ -315,10 +334,10 @@ function tokenizeBlock(block, refMap, usedFootnotes) {
           // 是任务列表项：生成复选框 Token
           const checked = /x/i.test(task[1]);
           tokens.push({ type: 'task_checkbox', checked });
-          tokens.push(...tokenizeInline(task[2] || '', refMap, usedFootnotes));
+          tokens.push(...tokenizeInline(task[2] || '', refMap, usedFootnotes, options));
         } else {
           // 普通列表项：直接解析内容为行内 Token
-          tokens.push(...tokenizeInline(itemText, refMap, usedFootnotes));
+          tokens.push(...tokenizeInline(itemText, refMap, usedFootnotes, options));
         }
         if (brAfterItem) tokens.push({ type: 'br' }); // 若有双空格结尾，生成强制换行 Token
         listItemStack.push(indent); // 记录当前列表项的缩进量（用于后续层级管理）
@@ -334,7 +353,7 @@ function tokenizeBlock(block, refMap, usedFootnotes) {
         if (lastTok && lastTok.type !== 'br' && lastTok.type !== 'list_item_open') {
           tokens.push({ type: 'br' });
         }
-        tokens.push(...tokenizeInline(clean, refMap, usedFootnotes));
+        tokens.push(...tokenizeInline(clean, refMap, usedFootnotes, options));
         if (brAfter) tokens.push({ type: 'br' });
         continue;
       }
@@ -359,7 +378,7 @@ function tokenizeBlock(block, refMap, usedFootnotes) {
       // 拼接未闭合代码围栏的原始文本（起始行 + 收集的内容）
       const rawText = `${fenceOpenRaw}\n${fenceBuf.join('\n')}`.replace(/\n+$/, '');
       tokens.push({ type: 'paragraph_open' });
-      tokens.push(...tokenizeInline(rawText, refMap, usedFootnotes));
+      tokens.push(...tokenizeInline(rawText, refMap, usedFootnotes, options));
       tokens.push({ type: 'paragraph_close' });
       // 重置代码块相关状态
       inFence = false;
@@ -384,7 +403,7 @@ function tokenizeBlock(block, refMap, usedFootnotes) {
     const text = headingMatch[2] || '';
     return [
       { type: `heading_${level}_open` },
-      ...tokenizeInline(text, refMap, usedFootnotes),
+      ...tokenizeInline(text, refMap, usedFootnotes, options),
       { type: `heading_${level}_close` }
     ];
   }
@@ -400,7 +419,7 @@ function tokenizeBlock(block, refMap, usedFootnotes) {
     const text = items[0].replace(/^(?:-|\+|\*|\d+\.)\s+/, '').trim();
     tokens.push(
       { type: 'list_item_open' },
-      ...tokenizeInline(text, refMap, usedFootnotes),
+      ...tokenizeInline(text, refMap, usedFootnotes, options),
       { type: 'list_item_close' }
     );
 
@@ -414,14 +433,14 @@ function tokenizeBlock(block, refMap, usedFootnotes) {
     const content = block.replace(/^\s*(?:>\s*)+/, '').trim();
     return [
       { type: 'blockquote_open' },
-      ...tokenizeInline(content, refMap, usedFootnotes),
+      ...tokenizeInline(content, refMap, usedFootnotes, options),
       { type: 'blockquote_close' }
     ];
   }
 
   return [
     { type: 'paragraph_open' },
-    ...tokenizeInline(block, refMap, usedFootnotes),
+    ...tokenizeInline(block, refMap, usedFootnotes, options),
     { type: 'paragraph_close' }
   ];
 }

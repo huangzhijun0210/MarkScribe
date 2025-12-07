@@ -9,7 +9,7 @@ import escapeCell from '../public/escape'
  * @param {string} markdown - 原始Markdown文本
  * @returns {Array} Token数组
  */
-function lexer(markdown) {
+function lexer(markdown, options = {}) {
   const pre = preprocess(markdown);
   //引用映射存全局,脚注映射存全局，脚注有问题
   const refMap = pre.refs || {};
@@ -18,7 +18,7 @@ function lexer(markdown) {
   //字符串数组
   const content = pre.content;
   //块级Token化(引用的refMap在这里面变成token了)
-  const all = tokenizeBlock(content, refMap, usedFootnotes);
+  const all = tokenizeBlock(content, refMap, usedFootnotes, options);
   //优先渲染使用的脚注
   const footIds = usedFootnotes.size ? Array.from(usedFootnotes) : Object.keys(footnotesMap || {});
 
@@ -44,7 +44,7 @@ function lexer(markdown) {
     for (const id of footIds) {
       all.push({ type: 'footnote_def_open', id, slug: slugMap[id] });
       // 脚注内容转成行内 Token
-      all.push(...tokenizeInline(footnotesMap[id] || '', refMap, usedFootnotes));
+      all.push(...tokenizeInline(footnotesMap[id] || '', refMap, usedFootnotes, options));
       all.push({ type: 'footnote_def_close', id });
     }
     all.push({ type: 'footnote_footer_close' });
