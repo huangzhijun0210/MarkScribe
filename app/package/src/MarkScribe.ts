@@ -83,3 +83,6 @@ export function MarkScribe(this: any, options?: Partial<MarkScribeOptions>) {
     this.options = { ...OPTIONS, ...options };
 }
 
+// 复用包内的工具导出，便于上层按包名导入
+export { default as blockPatcher } from './util/vdom/blockPatcher';
+
