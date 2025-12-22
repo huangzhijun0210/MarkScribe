@@ -10,7 +10,7 @@ import escapeCell from '../public/escape'
  * @returns {Array} Token数组
  */
 function lexer(markdown, options = {}) {
-  const pre = preprocess(markdown);
+  const pre = preprocess(markdown, options);
   //引用映射存全局,脚注映射存全局，脚注有问题
   const refMap = pre.refs || {};
   const footnotesMap = pre.footnotes || {};

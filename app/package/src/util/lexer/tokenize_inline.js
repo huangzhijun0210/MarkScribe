@@ -18,6 +18,8 @@ function tokenizeInline(text, refMap, usedFootnotes, options = {}) {
     { regex: /\[\^([^\]]+)\]/g, type: 'footnote_ref' }, // 脚注引用
     { regex: /(?<![!\\])\[(?!\^)([^\]]+)\](?!\()/g, type: 'ref_shortcut' }, // 快捷引用链接
     { regex: /<\/?[a-zA-Z][\w-]*(?:\s+[^<>]*?)?>/g, type: 'html_tag' }, // 内嵌 HTML 标签
+    // 裸 URL 自动链接：以 http(s):// 或 www. 开头，匹配到第一个空白或 <
+    { regex: /(https?:\/\/|www\.)[^\s<)\]]+/g, type: 'autolink' },
     { regex: /(\*\*|__)/g, type: 'strong_markup' }, // 加粗标记
     { regex: /(\*|_)/g, type: 'em_markup' }, // 斜体标记
     { regex: /\\([\*_`\[\]()#+-])/g, type: 'escape' } // 转义字符
@@ -157,6 +159,23 @@ function tokenizeInline(text, refMap, usedFootnotes, options = {}) {
           tokens.push({ type: 'html_inline', content: match[0] });
         }
         break;
+      case 'autolink': {
+        // 把裸 URL 转为 link token；修剪末尾常见标点
+        let raw = match[0];
+        // 如果以 ')' 或 ']' 等结束，可能是被包在句子内，去掉末尾的这些符号
+        const trailMatch = raw.match(/[\.!,?:;\)\]]+$/);
+        let trailing = '';
+        if (trailMatch) {
+          trailing = trailMatch[0];
+          raw = raw.slice(0, raw.length - trailing.length);
+        }
+        let href = raw;
+        if (/^www\./i.test(raw)) href = 'http://' + raw;
+        tokens.push({ type: 'link', text: raw, href: browserUrl(href), title: '' });
+        // 把被截掉的尾随符号作为普通文本追加
+        if (trailing) tokens.push({ type: 'text', content: trailing });
+        break;
+      }
       case 'strong_markup': // 加粗标记（**或__）
         tokens.push({ type: 'strong_markup', markup: groups[0] || '**' });
         // 维护强调状态栈：如果栈顶是 strong，说明是关闭标记（弹栈）；否则是开启标记（压栈）

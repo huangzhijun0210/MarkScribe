@@ -3,8 +3,13 @@
 /**
  * 预处理函数，此函数作用把原markdown去掉多余换行和空白字符转换为字符串数组
  */
-function preprocess(input) {
-  const normalized = input.replace(/\r\n|\r/g, '\n').replace(/\n{3,}/g, '\n\n');
+function preprocess(input, options = {}) {
+  const normalized = options.breaks
+  ? input.replace(/\r\n|\r/g, '\n')
+         .replace(/\n{3,}/g, '\n\n')
+         .replace(/\\n/g, '<br>')          // 注意反斜杠转义
+  : input.replace(/\r\n|\r/g, '\n')
+         .replace(/\n{3,}/g, '\n\n');
   const lines = normalized.split('\n');
 
   const kept = []; // 存放保留的核心内容（非引用、非脚注的行）
